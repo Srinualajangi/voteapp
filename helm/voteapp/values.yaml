@@ -1,0 +1,120 @@
+# =============================================================================
+# Default Values for VoteApp Helm Chart
+# Think of it as: The default ingredients list
+# Each service can be customized here without touching the templates
+# =============================================================================
+
+# -- Global image settings
+image:
+  registry: ""  # Set via CI/CD: <account>.dkr.ecr.us-east-1.amazonaws.com
+  tag: "latest"
+  pullPolicy: Always
+
+# =============================================================================
+# Vote Service (Python Flask) - Frontend for casting votes
+# =============================================================================
+vote:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: voteapp/vote
+  service:
+    type: LoadBalancer
+    port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  env:
+    REDIS_HOST: "redis"
+    OPTION_A: "Cats"
+    OPTION_B: "Dogs"
+
+# =============================================================================
+# Result Service (Node.js) - Dashboard for viewing results
+# =============================================================================
+result:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: voteapp/result
+  service:
+    type: LoadBalancer
+    port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  env:
+    POSTGRES_HOST: "db"
+    POSTGRES_PORT: "5432"
+    POSTGRES_DB: "postgres"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+
+# =============================================================================
+# Worker Service (.NET) - Background vote processor
+# =============================================================================
+worker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: voteapp/worker
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  env:
+    REDIS_HOST: "redis"
+    POSTGRES_HOST: "db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_DB: "postgres"
+
+# =============================================================================
+# Redis - In-Memory Cache (stores votes temporarily)
+# =============================================================================
+redis:
+  enabled: true
+  image: redis:7-alpine
+  service:
+    port: 6379
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+# =============================================================================
+# PostgreSQL - Persistent Database (stores final results)
+# =============================================================================
+postgresql:
+  enabled: true
+  image: postgres:15-alpine
+  service:
+    port: 5432
+  env:
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_DB: "postgres"
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

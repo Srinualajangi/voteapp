@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>VoteApp - Results</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+        h1 { margin-bottom: 40px; font-size: 2.5em; }
+        .results {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        .result-box {
+            background: rgba(255,255,255,0.1);
+            padding: 30px 50px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .result-box.a { border-left: 5px solid #667eea; }
+        .result-box.b { border-left: 5px solid #764ba2; }
+        .label { font-size: 1.5em; margin-bottom: 10px; }
+        .count { font-size: 4em; font-weight: bold; }
+        .percentage { font-size: 1.2em; color: #888; }
+        .total { margin-top: 20px; color: #888; }
+        .bar-container {
+            width: 100%;
+            max-width: 500px;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        .bar {
+            height: 100%;
+            display: flex;
+        }
+        .bar-a { background: #667eea; transition: width 0.5s; }
+        .bar-b { background: #764ba2; transition: width 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Live Results</h1>
+        <div class="results">
+            <div class="result-box a">
+                <div class="label" id="option-a">Cats</div>
+                <div class="count" id="count-a">0</div>
+                <div class="percentage" id="pct-a">0%</div>
+            </div>
+            <div class="result-box b">
+                <div class="label" id="option-b">Dogs</div>
+                <div class="count" id="count-b">0</div>
+                <div class="percentage" id="pct-b">0%</div>
+            </div>
+        </div>
+        <div class="bar-container">
+            <div class="bar">
+                <div class="bar-a" id="bar-a" style="width: 50%"></div>
+                <div class="bar-b" id="bar-b" style="width: 50%"></div>
+            </div>
+        </div>
+        <div class="total">Total Votes: <span id="total">0</span></div>
+    </div>
+    <script>
+        async function fetchResults() {
+            try {
+                const res = await fetch('/api/results');
+                const data = await res.json();
+                
+                document.getElementById('count-a').textContent = data.a;
+                document.getElementById('count-b').textContent = data.b;
+                document.getElementById('total').textContent = data.total;
+                
+                const pctA = data.total > 0 ? (data.a / data.total * 100).toFixed(1) : 50;
+                const pctB = data.total > 0 ? (data.b / data.total * 100).toFixed(1) : 50;
+                
+                document.getElementById('pct-a').textContent = pctA + '%';
+                document.getElementById('pct-b').textContent = pctB + '%';
+                document.getElementById('bar-a').style.width = pctA + '%';
+                document.getElementById('bar-b').style.width = pctB + '%';
+            } catch (err) {
+                console.error('Error fetching results:', err);
+            }
+        }
+        
+        // Fetch results every 2 seconds
+        fetchResults();
+        setInterval(fetchResults, 2000);
+    </script>
+</body>
+</html>

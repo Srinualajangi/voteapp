@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>VoteApp - Cast Your Vote!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: rgba(255,255,255,0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 { 
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        button {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        button.a { background: #667eea; color: white; }
+        button.b { background: #764ba2; color: white; }
+        button:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .vote-result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            color: #2e7d32;
+        }
+        .hostname {
+            margin-top: 20px;
+            color: #999;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗳️ Cast Your Vote!</h1>
+        <form method="POST">
+            <div class="buttons">
+                <button type="submit" name="vote" value="a" class="a">{{option_a}}</button>
+                <button type="submit" name="vote" value="b" class="b">{{option_b}}</button>
+            </div>
+        </form>
+        {% if vote %}
+        <div class="vote-result">
+            ✅ You voted for <strong>{{ option_a if vote == 'a' else option_b }}</strong>!
+        </div>
+        {% endif %}
+        <div class="hostname">Container: {{hostname}}</div>
+    </div>
+</body>
+</html>

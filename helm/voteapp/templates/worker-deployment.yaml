@@ -1,0 +1,32 @@
+# Worker Service Deployment (no Service needed - it's a background worker)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels:
+    app: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          {{- if .Values.image.registry }}
+          image: "{{ .Values.image.registry }}/{{ .Values.worker.image.repository }}:{{ .Values.image.tag }}"
+          {{- else }}
+          image: "{{ .Values.worker.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- range $key, $val := .Values.worker.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}

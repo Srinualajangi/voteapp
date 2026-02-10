@@ -1,0 +1,16 @@
+# =============================================================================
+# Helm Chart Metadata
+# Think of it as: The cover page of a recipe book
+# =============================================================================
+apiVersion: v2
+name: voteapp
+description: VoteApp - Cloud-Native Voting Application (DevSecOps Demo)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - voting
+  - microservices
+  - devsecops
+maintainers:
+  - name: srinualajangi

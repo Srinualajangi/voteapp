@@ -1,0 +1,44 @@
+# =============================================================================
+# VoteApp CD Pipeline - Deploy to EKS using Helm
+# =============================================================================
+
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    branches: [main]
+    types: [completed]
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: voteapp-eks
+
+jobs:
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+      - uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install voteapp ./helm/voteapp \
+            --namespace voteapp --create-namespace \
+            --set image.tag=${{ github.event.workflow_run.head_sha }} \
+            --set image.registry=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com \
+            --wait --timeout 5m
+      - name: Verify
+        run: |
+          kubectl get pods -n voteapp
+          kubectl get svc -n voteapp
