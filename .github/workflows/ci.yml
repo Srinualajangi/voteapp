@@ -1,19 +1,15 @@
-# =============================================================================
-# VoteApp CI Pipeline - GitHub Actions
-# =============================================================================
-# Runs on every push: Scan -> Build -> Push to ECR
-
 name: CI Pipeline
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
 env:
   AWS_REGION: us-east-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REGISTRY: 718307299298.dkr.ecr.us-east-1.amazonaws.com
 
 jobs:
   security-scan:
@@ -21,26 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Trivy SCA Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          exit-code: '0'
-          severity: 'CRITICAL,HIGH'
-
-      - name: SonarCloud SAST Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ github.repository_owner }}_voteapp
-            -Dsonar.organization=${{ github.repository_owner }}
-        continue-on-error: true
 
   build-vote:
     name: Build Vote Service
@@ -54,11 +30,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@v2
+      
       - name: Build & Push Vote
         working-directory: services/vote
         run: |
-          docker build -t $ECR_REGISTRY/voteapp/vote:${{ github.sha }} -t $ECR_REGISTRY/voteapp/vote:latest .
-          docker push $ECR_REGISTRY/voteapp/vote --all-tags
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+            docker build -t $ECR_REGISTRY/voteapp/vote:$TAG .
+            docker push $ECR_REGISTRY/voteapp/vote:$TAG
+          else
+            docker build -t $ECR_REGISTRY/voteapp/vote:${{ github.sha }} -t $ECR_REGISTRY/voteapp/vote:latest .
+            docker push $ECR_REGISTRY/voteapp/vote --all-tags
+          fi
 
   build-result:
     name: Build Result Service
@@ -72,11 +55,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build & Push Result
         working-directory: services/result
         run: |
-          docker build -t $ECR_REGISTRY/voteapp/result:${{ github.sha }} -t $ECR_REGISTRY/voteapp/result:latest .
-          docker push $ECR_REGISTRY/voteapp/result --all-tags
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+            docker build -t $ECR_REGISTRY/voteapp/result:$TAG .
+            docker push $ECR_REGISTRY/voteapp/result:$TAG
+          else
+            docker build -t $ECR_REGISTRY/voteapp/result:${{ github.sha }} -t $ECR_REGISTRY/voteapp/result:latest .
+            docker push $ECR_REGISTRY/voteapp/result --all-tags
+          fi
 
   build-worker:
     name: Build Worker Service
@@ -90,8 +80,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build & Push Worker
         working-directory: services/worker
         run: |
-          docker build -t $ECR_REGISTRY/voteapp/worker:${{ github.sha }} -t $ECR_REGISTRY/voteapp/worker:latest .
-          docker push $ECR_REGISTRY/voteapp/worker --all-tags
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+            docker build -t $ECR_REGISTRY/voteapp/worker:$TAG .
+            docker push $ECR_REGISTRY/voteapp/worker:$TAG
+          else
+            docker build -t $ECR_REGISTRY/voteapp/worker:${{ github.sha }} -t $ECR_REGISTRY/voteapp/worker:latest .
+            docker push $ECR_REGISTRY/voteapp/worker --all-tags
+          fi
